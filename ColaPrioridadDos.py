@@ -1,4 +1,4 @@
-#construir la clase que representa la cola de prioridad 
+#construir la clase que representa la cola de prioridad ej
 class ColaPrioridad:
     # Constructor de la clase
     def __init__(self):#crear la cola vacia
@@ -78,4 +78,4 @@ while True:
 
     else:
         print("Opción no valida, intente otra opción.")
-        
+
