@@ -1,0 +1,107 @@
+class ListaCircular:
+    def __init__(self):
+        self.cola = None            # cola.siguiente es la cabeza
+        self.tamano = 0
+
+    def esta_vacia(self):
+        """O(1)"""
+        return self.cola is None
+
+    def __len__(self):
+        """O(1)"""
+        return self.tamano
+
+    def insertar_inicio(self, dato):
+        """O(1)"""
+        if self.cola is None:
+            return self.insertar_final(dato)
+        nuevo = Nodo(dato)
+        nuevo.siguiente = self.cola.siguiente
+        self.cola.siguiente = nuevo
+        self.tamano += 1
+
+    def insertar_final(self, dato):
+        """O(1)"""
+        nuevo = Nodo(dato)
+        if self.cola is None:
+            nuevo.siguiente = nuevo         # un solo nodo: se apunta a sí mismo
+        else:
+            nuevo.siguiente = self.cola.siguiente
+            self.cola.siguiente = nuevo
+        self.cola = nuevo
+        self.tamano += 1
+
+    def insertar_en(self, pos, dato):
+        """O(n)"""
+        _validar(pos, self.tamano)
+        if pos == 0:
+            return self.insertar_inicio(dato)
+        if pos == self.tamano:
+            return self.insertar_final(dato)
+        previo = self.cola.siguiente
+        for _ in range(pos - 1):
+            previo = previo.siguiente
+        nuevo = Nodo(dato)
+        nuevo.siguiente = previo.siguiente
+        previo.siguiente = nuevo
+        self.tamano += 1
+
+    def eliminar(self, dato):
+        """O(n). Se detiene tras 'tamano' pasos (evita ciclo infinito)."""
+        if self.cola is None:
+            return False
+        previo, actual = self.cola, self.cola.siguiente
+        for _ in range(self.tamano):
+            if actual.dato == dato:
+                break
+            previo, actual = actual, actual.siguiente
+        else:
+            return False
+        if self.tamano == 1:
+            self.cola = None
+        else:
+            previo.siguiente = actual.siguiente
+            if actual is self.cola:
+                self.cola = previo
+        self.tamano -= 1
+        return True
+
+    def buscar(self, dato):
+        """O(n). Devuelve el índice del dato o -1."""
+        actual = self.cola.siguiente if self.cola else None
+        for i in range(self.tamano):
+            if actual.dato == dato:
+                return i
+            actual = actual.siguiente
+        return -1
+
+    def recorrer(self):
+        """O(n). Da una sola vuelta (tamano pasos): sin ciclo infinito."""
+        datos = []
+        actual = self.cola.siguiente if self.cola else None
+        for _ in range(self.tamano):
+            datos.append(actual.dato)
+            actual = actual.siguiente
+        return datos
+
+    def josefo(self, k):
+        """O(n*k). Elimina cada k-ésimo nodo (modifica la lista).
+        Devuelve (orden de eliminación, sobreviviente)."""
+        if self.cola is None or k < 1:
+            raise ValueError("lista vacía o k inválido")
+        previo, orden = self.cola, []
+        while self.tamano > 1:
+            for _ in range(k - 1):
+                previo = previo.siguiente
+            elim = previo.siguiente
+            previo.siguiente = elim.siguiente
+            if elim is self.cola:
+                self.cola = previo
+            self.tamano -= 1
+            orden.append(elim.dato)
+        return orden, self.cola.dato
+
+    def __str__(self):
+        if self.cola is None:
+            return "(vacía)"
+        return "".join(f"{d} -> " for d in self.recorrer()) + "(vuelve a la cabeza)"

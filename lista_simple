@@ -1,0 +1,213 @@
+class ListaSimple:
+    def __init__(self):
+        self.cabeza = None
+        self.tamano = 0
+
+    def esta_vacia(self):
+        """O(1)"""
+        return self.cabeza is None
+
+    def __len__(self):
+        """O(1)"""
+        return self.tamano
+
+    def insertar_inicio(self, dato):
+        """O(1)"""
+        nuevo = Nodo(dato)
+        nuevo.siguiente = self.cabeza
+        self.cabeza = nuevo
+        self.tamano += 1
+
+    def insertar_final(self, dato):
+        """O(n): recorre hasta el último nodo (sin referencia a la cola)."""
+        nuevo = Nodo(dato)
+        if self.cabeza is None:
+            self.cabeza = nuevo
+        else:
+            actual = self.cabeza
+            while actual.siguiente:
+                actual = actual.siguiente
+            actual.siguiente = nuevo
+        self.tamano += 1
+
+    def insertar_en(self, pos, dato):
+        """O(n). Inserta en la posición pos (0..len)."""
+        _validar(pos, self.tamano)
+        if pos == 0:
+            return self.insertar_inicio(dato)
+        previo = self.cabeza
+        for _ in range(pos - 1):
+            previo = previo.siguiente
+        nuevo = Nodo(dato)
+        nuevo.siguiente = previo.siguiente
+        previo.siguiente = nuevo
+        self.tamano += 1
+
+    def eliminar(self, dato):
+        """O(n). Elimina la primera aparición; True si la encontró."""
+        previo, actual = None, self.cabeza
+        while actual and actual.dato != dato:
+            previo, actual = actual, actual.siguiente
+        if actual is None:          # lista vacía o dato no encontrado
+            return False
+        if previo is None:          # eliminar la cabeza
+            self.cabeza = actual.siguiente
+        else:
+            previo.siguiente = actual.siguiente
+        self.tamano -= 1
+        return True
+
+    def buscar(self, dato):
+        """O(n). Devuelve el índice del dato o -1."""
+        actual, i = self.cabeza, 0
+        while actual:
+            if actual.dato == dato:
+                return i
+            actual, i = actual.siguiente, i + 1
+        return -1
+
+    def recorrer(self):
+        """O(n). Devuelve los datos en orden."""
+        datos, actual = [], self.cabeza
+        while actual:
+            datos.append(actual.dato)
+            actual = actual.siguiente
+        return datos
+
+    def recorrer_inverso(self):
+        """O(n) tiempo y O(n) pila de recursión."""
+        def rec(nodo):
+            return rec(nodo.siguiente) + [nodo.dato] if nodo else []
+        return rec(self.cabeza)
+
+    def invertir(self):
+        """O(n). Invierte los enlaces en el mismo lugar."""
+        previo, actual = None, self.cabeza
+        while actual:
+            actual.siguiente, previo, actual = previo, actual, actual.siguiente
+        self.cabeza = previo
+
+    def __str__(self):
+        return "".join(f"{d} -> " for d in self.recorrer()) + "None"
+
+
+# ---------------------------------------------------------------- DOBLE
+class ListaDoble:
+    def __init__(self):
+        self.cabeza = None
+        self.cola = None
+        self.tamano = 0
+
+    def esta_vacia(self):
+        """O(1)"""
+        return self.cabeza is None
+
+    def __len__(self):
+        """O(1)"""
+        return self.tamano
+
+    def insertar_inicio(self, dato):
+        """O(1)"""
+        nuevo = NodoDoble(dato)
+        nuevo.siguiente = self.cabeza
+        if self.cabeza:
+            self.cabeza.anterior = nuevo
+        else:
+            self.cola = nuevo
+        self.cabeza = nuevo
+        self.tamano += 1
+
+    def insertar_final(self, dato):
+        """O(1) gracias a la referencia a la cola."""
+        nuevo = NodoDoble(dato)
+        nuevo.anterior = self.cola
+        if self.cola:
+            self.cola.siguiente = nuevo
+        else:
+            self.cabeza = nuevo
+        self.cola = nuevo
+        self.tamano += 1
+
+    def _nodo_en(self, pos):
+        """O(n/2): parte desde el extremo más cercano."""
+        if pos < self.tamano // 2:
+            actual = self.cabeza
+            for _ in range(pos):
+                actual = actual.siguiente
+        else:
+            actual = self.cola
+            for _ in range(self.tamano - 1 - pos):
+                actual = actual.anterior
+        return actual
+
+    def insertar_en(self, pos, dato):
+        """O(n)"""
+        _validar(pos, self.tamano)
+        if pos == 0:
+            return self.insertar_inicio(dato)
+        if pos == self.tamano:
+            return self.insertar_final(dato)
+        sig = self._nodo_en(pos)
+        previo = sig.anterior
+        nuevo = NodoDoble(dato)
+        nuevo.anterior, nuevo.siguiente = previo, sig
+        previo.siguiente = sig.anterior = nuevo
+        self.tamano += 1
+
+    def _desenlazar(self, nodo):
+        """O(1). Reconecta a los vecinos del nodo."""
+        if nodo.anterior:
+            nodo.anterior.siguiente = nodo.siguiente
+        else:
+            self.cabeza = nodo.siguiente
+        if nodo.siguiente:
+            nodo.siguiente.anterior = nodo.anterior
+        else:
+            self.cola = nodo.anterior
+        self.tamano -= 1
+
+    def eliminar(self, dato):
+        """O(n). Elimina la primera aparición; True si la encontró."""
+        actual = self.cabeza
+        while actual and actual.dato != dato:
+            actual = actual.siguiente
+        if actual is None:
+            return False
+        self._desenlazar(actual)
+        return True
+
+    def eliminar_en(self, pos):
+        """O(n/2) desde el extremo más cercano. Devuelve el dato eliminado."""
+        if not 0 <= pos < self.tamano:
+            raise IndexError("posición fuera de rango")
+        nodo = self._nodo_en(pos)
+        self._desenlazar(nodo)
+        return nodo.dato
+
+    def buscar(self, dato):
+        """O(n). Devuelve el índice del dato o -1."""
+        actual, i = self.cabeza, 0
+        while actual:
+            if actual.dato == dato:
+                return i
+            actual, i = actual.siguiente, i + 1
+        return -1
+
+    def recorrer(self):
+        """O(n)"""
+        datos, actual = [], self.cabeza
+        while actual:
+            datos.append(actual.dato)
+            actual = actual.siguiente
+        return datos
+
+    def recorrer_inverso(self):
+        """O(n). Usa los enlaces anterior desde la cola."""
+        datos, actual = [], self.cola
+        while actual:
+            datos.append(actual.dato)
+            actual = actual.anterior
+        return datos
+
+    def __str__(self):
+        return "None <-> " + "".join(f"{d} <-> " for d in self.recorrer()) + "None"
